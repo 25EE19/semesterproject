@@ -1,4 +1,5 @@
 //TODO MQTT einbinden und Testen
+//Oder eventuell auch BLYNK
 
 #include <SPI.h>
 #include <MFRC522.h>
