@@ -3,39 +3,37 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
+#define SS_PIN 15
+#define RST_PIN 0
+#define SENSOR D1 //Magnetschalter der den Alarm auslöst, sobald er unterbrochen ist und die Alarmanlage scharf ist
+#define BUZZER D2 //Pieper der einen Signalton von sich gibt
+#define LED D4
+
 //folgende vier Parameter anpassen / Topic gegebenenfalls ändern und die Anmeldedaten sowie den Namen des Routers angeben
 const char* mqtt_topic_publish = "Alarmanlage";
 const char* mqtt_topic_subscribe = "DatenHandy";
-const char* ssid = "xxxxxx"; // Name des Netzwerks / Routers
-const char* password = "xxxxxxx"; // Passwort vom Netzwerk / Router
+const char* ssid = "xxxxxx"; //Name des Netzwerks / Routers
+const char* password = "xxxxxxx"; //Passwort vom Netzwerk / Router
 
-// Paramter für die Kommunikation mit dem Server
+//Paramter für die Kommunikation mit dem Server
 const char* mqtt_server = "mqtt.iot.informatik.uni-oldenburg.de";
 const int mqtt_port = 2883;
 const char* mqtt_user = "sutk";
 const char* mqtt_pw = "SoftSkills";
 
-
-WiFiClient espClient;
-PubSubClient client(espClient);
-
 long lastMsg = 0;
 int val = 0;
-
-#define SS_PIN 15
-#define RST_PIN 0
-#define SENSOR D1 //Magnetschalter der den Alarm auslöst, sobald er unterbrochen ist und die Alarmanlage scharf ist
-#define BUZZER D2 // Pieper der einen Signalton von sich gibt
-#define LED D4
 int state; //Zustand des Systems
 MFRC522 mfrc522(SS_PIN, RST_PIN);
+WiFiClient espClient;
+PubSubClient client(espClient);
 
 void setup_wifi() {
 
   delay(10);
-  // We start by connecting to a WiFi network
+  //Verbindung zu einem Netzwerk...
   Serial.println();
-  Serial.print("Connecting to ");
+  Serial.print("Verbindung zu ");
   Serial.println(ssid);
 
   WiFi.begin(ssid, password);
@@ -48,15 +46,15 @@ void setup_wifi() {
   randomSeed(micros());
 
   Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
+  Serial.println("WiFi verbunden");
+  Serial.println("IP Adresse: ");
   Serial.println(WiFi.localIP());
 }
 
 //Diese Methode wird aufgerufen, sobald es neue Nachrichten gibt, die über das Topic "DatenHandy" versendet wurden.
 void callback(char* topic, byte* payload, unsigned int length) {
   char receivedPayload[length];
-  Serial.print("Message arrived [");
+  Serial.print("Nachricht angekommen [");
   Serial.print(topic);
   Serial.print("] ");
   for (int i = 0; i < length; i++) {
@@ -66,50 +64,46 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
   void reconnect() {
-  // Loop until we're reconnected
+  //Schleife bis die Verbindung wieder hergestellt ist
   while (!client.connected()) {
-    Serial.print("Attempting MQTT connection...");
+    Serial.print("Versuche MQTT-Verbindung herzustellen...");
     
-    // Create a random client ID: Client ID MUSS inviduell sein, da der MQTT Broker nicht mehrere Clients mit derselben ID bedienen kann
+    //Erzeuge eine zufällige client ID: Client ID MUSS inviduell sein, da der MQTT Broker nicht mehrere Clients mit derselben ID bedienen kann
     String clientId = "Client-";
     clientId += String(random(0xffff), HEX);
     
-    // Attempt to connect
+    //Versuche zu verbinden
     if (client.connect(clientId.c_str(), mqtt_user, mqtt_pw)) {
-      Serial.println("connected");
-      // Once connected, publish an announcement...
+      Serial.println("Verbunden");
       client.subscribe(mqtt_topic_subscribe);
     } else {
-      Serial.print("failed, rc=");
+      Serial.print("fehlgeschlagen, rc=");
       Serial.print(client.state());
-      Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
+      Serial.println(" erneuter Versuch in 5 Sekunden");
       delay(5000);
     }
   }
 }
 
 void setup(){
-
-pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
   Serial.begin(115200);
+  
+  pinMode(SENSOR, INPUT_PULLUP);
+  pinMode(BUZZER, OUTPUT);
+  pinMode(LED, OUTPUT); //Der Pin 4 ist jetzt ein Ausgang und die LED ist dort angeschlossen
+  
   setup_wifi();
-
+  SPI.begin();
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);
+  mfrc522.PCD_Init();
   
- if (digitalRead(SENSOR) == HIGH) {   //Magnetschalter wird ausgelesen
+  if (digitalRead(SENSOR) == HIGH) {   //Magnetschalter wird ausgelesen
     state = 0;
   }else{
     digitalWrite(LED,HIGH);
     state = 1;
   }
-  pinMode(SENSOR, INPUT_PULLUP);
-  pinMode(BUZZER, OUTPUT);
-  Serial.begin(115200);
-  SPI.begin();
-  mfrc522.PCD_Init();
-  pinMode (LED, OUTPUT); // Der Pin 4 ist jetzt ein Ausgang und die LED ist dort angeschlossen
 }
 
 void loop(){
@@ -119,17 +113,16 @@ void loop(){
   }
   client.loop();
     
-  long code = chipID(); // Die Zahlenkombination des RFID-Chips (Die ID des Chips) 
+  long code = chipID(); //Die Zahlenkombination des RFID-Chips (Die ID des Chips) 
   switch (state){
     case 0: activateSystem(code); break;
     case 1: checkSystem(code); break;
     case 3: alarm(code); break;
   }
   Serial.println(state);
- 
 }
 
-//Auslesen (und Zurueckgeben) der ID auf dem Chip // Die Zahlenkombination wird als HEXA-Zahl angegeben, deshalb muss diese umgerechnet werde, um eine Dezimalzahl zu erhalten
+//Auslesen (und Zurueckgeben) der ID auf dem Chip. Die Zahlenkombination wird als HEXA-Zahl angegeben, deshalb muss diese umgerechnet werde, um eine Dezimalzahl zu erhalten
 long chipID(){
   long result = 0;
   if (mfrc522.PICC_IsNewCardPresent() && mfrc522.PICC_ReadCardSerial()){
@@ -147,7 +140,7 @@ void alarm(long id){
     state = 0;    //inaktiviert das System
     digitalWrite (BUZZER, LOW);
     digitalWrite(LED,LOW);
-    // Publish Char Array (einfachste Methode)
+    //Publish Char Array (einfachste Methode)
     client.publish(mqtt_topic_publish, "1");
     delay(2000);
   }
@@ -158,7 +151,7 @@ void activateSystem(long id){
   if (id == 1786920){
       state = 1;
       digitalWrite(LED,HIGH);
-      // Publish Char Array (einfachste Methode)
+      //Publish Char Array (einfachste Methode)
     client.publish(mqtt_topic_publish, "2");
       delay(1000);
   }
