@@ -7,7 +7,7 @@
 #define RST_PIN 0
 #define SENSOR D1 //Magnetschalter der den Alarm auslöst, sobald er unterbrochen ist und die Alarmanlage scharf ist
 #define BUZZER D2 //Pieper der einen Signalton von sich gibt
-#define LED D4
+#define LED D4 // Die LED die leuchtet, während der Alarm scharf ist
 
 //folgende vier Parameter anpassen / Topic gegebenenfalls ändern und die Anmeldedaten sowie den Namen des Routers angeben
 const char* mqtt_topic_publish = "Alarmanlage";
