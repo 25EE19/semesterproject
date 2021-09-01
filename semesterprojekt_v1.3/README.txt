@@ -13,4 +13,4 @@ Setup--------------------------------------------------
 
 	6. Sobald die rote Diode leuchet, ist der Alarm scharf.
 
-	7. Wenn der RFID-Chip gegen die Einbruchmeldeanlage gehalten wird, wird der Alarm deaktiviert. 
+	7. Wenn der RFID-Chip gegen die Einbruchmeldeanlage gehalten wird, wird der Alarm für 30 Sekunden deaktiviert. 
