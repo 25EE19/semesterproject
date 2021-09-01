@@ -162,6 +162,8 @@ void checkSystem(long id){
   if (digitalRead(SENSOR) == HIGH){
     state = 3;
   }else if(id == 1786920){
-      delay(30000);   //Der Alarm wir fuer 30 Sekunden ausgesetzt  
+    digitalWrite(LED,LOW);
+      delay(30000);   //Der Alarm wir fuer 30 Sekunden ausgesetzt 
+      digitalWrite(LED,HIGH); 
   }
 }
