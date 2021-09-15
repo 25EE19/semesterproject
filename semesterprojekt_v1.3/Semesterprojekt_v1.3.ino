@@ -12,14 +12,14 @@
 //folgende vier Parameter anpassen / Topic gegebenenfalls ändern und die Anmeldedaten sowie den Namen des Routers angeben
 const char* mqtt_topic_publish = "Alarmanlage";
 const char* mqtt_topic_subscribe = "DatenHandy";
-const char* ssid = "HUAWEI P30 Pro"; //Name des Netzwerks / Routers
-const char* password = "bd3751d235a7"; //Passwort vom Netzwerk / Router
+const char* ssid = "xxx"; //Name des Netzwerks / Routers
+const char* password = "xxx"; //Passwort vom Netzwerk / Router
 
 //Paramter für die Kommunikation mit dem Server
 const char* mqtt_server = "mqtt.iot.informatik.uni-oldenburg.de";
 const int mqtt_port = 2883;
-const char* mqtt_user = "sutk";
-const char* mqtt_pw = "SoftSkills";
+const char* mqtt_user = "xxx";
+const char* mqtt_pw = "xxx";
 
 long lastMsg = 0;
 int val = 0;
